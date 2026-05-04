@@ -142,8 +142,8 @@ public class VentanaPrincipal extends JFrame {
     }
 
     private void generarDerivacion() {
-        String expresion = campoExpresion.getText().trim();
-        if (expresion.isEmpty()) {
+        String expresion = campoExpresion.getText().trim().replaceAll("\\s+", " ");
+                if (expresion.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Ingrese una expresión objetivo.");
             return;
         }

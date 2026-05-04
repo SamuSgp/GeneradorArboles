@@ -14,107 +14,81 @@ public class ServicioArbolDerivacion {
     }
 
     public NodoArbol construir(String expresionObjetivo, boolean izquierda) {
-        ServicioDerivacion servicioDerivacion = new ServicioDerivacion(gramatica);
+        String objetivo = expresionObjetivo.trim().replaceAll("\\s+", " ");
 
+        ServicioDerivacion sd = new ServicioDerivacion(gramatica);
         List<String> pasos;
         if (izquierda) {
-            pasos = servicioDerivacion.derivarIzquierda(expresionObjetivo);
+            pasos = sd.derivarIzquierda(objetivo);
         } else {
-            pasos = servicioDerivacion.derivarDerecha(expresionObjetivo);
+            pasos = sd.derivarDerecha(objetivo);
         }
 
+        if (pasos.isEmpty()) return new NodoArbol(gramatica.getSimboloInicial());
+
         NodoArbol raiz = new NodoArbol(gramatica.getSimboloInicial());
-        construirRecursivo(raiz, expresionObjetivo);
+
+        for (int i = 0; i < pasos.size() - 1; i++) {
+            String[] anterior = pasos.get(i).trim().split("\\s+");
+            String[] siguiente = pasos.get(i + 1).trim().split("\\s+");
+
+            // Buscar la posición donde difieren comparando desde la izquierda
+            int posInicio = -1;
+            for (int j = 0; j < anterior.length; j++) {
+                if (j >= siguiente.length || !anterior[j].equals(siguiente[j])) {
+                    posInicio = j;
+                    break;
+                }
+            }
+
+            // Si no encontró diferencia comparando desde izquierda,
+            // el símbolo reemplazado está al final
+            if (posInicio == -1) {
+                posInicio = anterior.length - 1;
+            }
+
+            String simboloReemplazado = anterior[posInicio];
+            int diferencia = siguiente.length - anterior.length;
+            int cantNuevos = Math.max(1, 1 + diferencia);
+            String[] nuevosSimbolos = new String[cantNuevos];
+            for (int k = 0; k < cantNuevos && (posInicio + k) < siguiente.length; k++) {
+                nuevosSimbolos[k] = siguiente[posInicio + k];
+            }
+
+            if (izquierda) {
+                expandirPrimerNodo(raiz, simboloReemplazado, nuevosSimbolos);
+            } else {
+                expandirUltimoNodo(raiz, simboloReemplazado, nuevosSimbolos);
+            }
+        }
+
         return raiz;
     }
 
-    // Expande recursivamente cada nodo no-terminal
-    private void construirRecursivo(NodoArbol nodo, String objetivo) {
-        String simbolo = nodo.getSimbolo();
-
-        if (gramatica.buscarRegla(simbolo) == null) {
-            // Es terminal, no se expande
-            return;
-        }
-
-        String[] produccion = elegirProduccionParaObjetivo(simbolo, objetivo);
-        if (produccion == null) return;
-
-        for (String s : produccion) {
-            NodoArbol hijo = new NodoArbol(s);
-            nodo.agregarHijo(hijo);
-        }
-
-        // Distribuir el objetivo entre los hijos no-terminales
-        distribuirYExpandir(nodo.getHijos(), objetivo);
-    }
-
-    private void distribuirYExpandir(List<NodoArbol> hijos, String objetivo) {
-        String[] simbolosObjetivo = objetivo.trim().split("\\s+");
-        int pos = 0;
-
-        for (NodoArbol hijo : hijos) {
-            if (gramatica.buscarRegla(hijo.getSimbolo()) == null) {
-                // Es terminal, avanzar posición
-                pos++;
-            } else {
-                // Es no-terminal, calcular cuántos terminales le corresponden
-                StringBuilder subObjetivo = new StringBuilder();
-                int terminalesNecesarios = contarTerminalesEsperados(hijo.getSimbolo(), simbolosObjetivo, pos);
-
-                for (int i = pos; i < pos + terminalesNecesarios && i < simbolosObjetivo.length; i++) {
-                    subObjetivo.append(simbolosObjetivo[i]).append(" ");
-                }
-
-                construirRecursivo(hijo, subObjetivo.toString().trim());
-                pos += terminalesNecesarios;
+    private boolean expandirPrimerNodo(NodoArbol nodo, String simbolo, String[] hijos) {
+        if (nodo.esHoja() && nodo.getSimbolo().equals(simbolo)) {
+            for (String h : hijos) {
+                nodo.agregarHijo(new NodoArbol(h));
             }
+            return true;
         }
+        for (NodoArbol hijo : nodo.getHijos()) {
+            if (expandirPrimerNodo(hijo, simbolo, hijos)) return true;
+        }
+        return false;
     }
 
-    // Estima cuántos terminales del objetivo consume este no-terminal
-    private int contarTerminalesEsperados(String noTerminal, String[] objetivoSimbolos, int desde) {
-        if (desde >= objetivoSimbolos.length) return 0;
-
-        // Para no-terminales conocidos de expresiones aritméticas
-        // se hace una estimación básica según el contexto
-        int restantes = objetivoSimbolos.length - desde;
-
-        // Si es el último no-terminal, toma todo lo que queda
-        return restantes > 0 ? restantes : 1;
-    }
-
-    private String[] elegirProduccionParaObjetivo(String noTerminal, String objetivo) {
-        if (gramatica.buscarRegla(noTerminal) == null) return null;
-
-        List<String[]> producciones = gramatica.buscarRegla(noTerminal).getProducciones();
-        String[] objetivoSimbolos = objetivo.trim().split("\\s+");
-
-        for (String[] produccion : producciones) {
-            if (produccionCoincideConObjetivo(produccion, objetivoSimbolos)) {
-                return produccion;
+    private boolean expandirUltimoNodo(NodoArbol nodo, String simbolo, String[] hijos) {
+        List<NodoArbol> hijosLista = nodo.getHijos();
+        for (int i = hijosLista.size() - 1; i >= 0; i--) {
+            if (expandirUltimoNodo(hijosLista.get(i), simbolo, hijos)) return true;
+        }
+        if (nodo.esHoja() && nodo.getSimbolo().equals(simbolo)) {
+            for (String h : hijos) {
+                nodo.agregarHijo(new NodoArbol(h));
             }
+            return true;
         }
-
-        // Fallback: primera producción
-        return producciones.get(0);
-    }
-
-    private boolean produccionCoincideConObjetivo(String[] produccion, String[] objetivo) {
-        // Verificar si los terminales de la producción están en el objetivo
-        for (String simbolo : produccion) {
-            if (gramatica.buscarRegla(simbolo) == null) {
-                // Es terminal, verificar si está en el objetivo
-                boolean encontrado = false;
-                for (String s : objetivo) {
-                    if (s.equals(simbolo)) {
-                        encontrado = true;
-                        break;
-                    }
-                }
-                if (!encontrado) return false;
-            }
-        }
-        return true;
+        return false;
     }
 }
