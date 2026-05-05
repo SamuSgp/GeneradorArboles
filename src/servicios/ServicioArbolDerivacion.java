@@ -32,7 +32,7 @@ public class ServicioArbolDerivacion {
             String[] anterior = pasos.get(i).trim().split("\\s+");
             String[] siguiente = pasos.get(i + 1).trim().split("\\s+");
 
-            // Buscar la posición donde difieren comparando desde la izquierda
+            // Encontrar inicio de diferencia desde izquierda
             int posInicio = -1;
             for (int j = 0; j < anterior.length; j++) {
                 if (j >= siguiente.length || !anterior[j].equals(siguiente[j])) {
@@ -40,19 +40,39 @@ public class ServicioArbolDerivacion {
                     break;
                 }
             }
+            if (posInicio == -1) posInicio = anterior.length - 1;
 
-            // Si no encontró diferencia comparando desde izquierda,
-            // el símbolo reemplazado está al final
-            if (posInicio == -1) {
-                posInicio = anterior.length - 1;
+            // Encontrar fin de diferencia desde derecha
+            int finAnterior = anterior.length - 1;
+            int finSiguiente = siguiente.length - 1;
+            while (finAnterior > posInicio && finSiguiente > posInicio &&
+                   anterior[finAnterior].equals(siguiente[finSiguiente])) {
+                finAnterior--;
+                finSiguiente--;
             }
 
-            String simboloReemplazado = anterior[posInicio];
-            int diferencia = siguiente.length - anterior.length;
-            int cantNuevos = Math.max(1, 1 + diferencia);
+            // El símbolo reemplazado debe ser un no-terminal.
+            // Si posInicio apunta a un terminal, retroceder hasta el no-terminal más cercano
+            int posNoTerminal = posInicio;
+            while (posNoTerminal > 0 && gramatica.buscarRegla(anterior[posNoTerminal]) == null) {
+                posNoTerminal--;
+            }
+
+            // Recalcular finSiguiente según la posición real del no-terminal
+            int desplazamiento = posInicio - posNoTerminal;
+            int finSiguienteAjustado = finSiguiente + desplazamiento;
+            if (finSiguienteAjustado >= siguiente.length) {
+                finSiguienteAjustado = siguiente.length - 1;
+            }
+
+            String simboloReemplazado = anterior[posNoTerminal];
+
+            int cantNuevos = finSiguienteAjustado - posNoTerminal + 1;
+            if (cantNuevos <= 0) continue;
+
             String[] nuevosSimbolos = new String[cantNuevos];
-            for (int k = 0; k < cantNuevos && (posInicio + k) < siguiente.length; k++) {
-                nuevosSimbolos[k] = siguiente[posInicio + k];
+            for (int k = 0; k < cantNuevos && (posNoTerminal + k) < siguiente.length; k++) {
+                nuevosSimbolos[k] = siguiente[posNoTerminal + k];
             }
 
             if (izquierda) {

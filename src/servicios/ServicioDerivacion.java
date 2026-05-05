@@ -79,7 +79,8 @@ public class ServicioDerivacion {
         String noTerminal = regla.getNoTerminalIzquierdo();
 
         int operadoresActual = contarOperadores(actual);
-        int operadoresFaltantes = contarOperadores(String.join(" ", simbolosObjetivo)) - operadoresActual;
+        int totalOperadores = contarOperadores(String.join(" ", simbolosObjetivo));
+        int operadoresFaltantes = totalOperadores - operadoresActual;
 
         boolean siguienteEsParentesis = posicionActual < simbolosObjetivo.length &&
                                         simbolosObjetivo[posicionActual].equals("(");
@@ -91,8 +92,13 @@ public class ServicioDerivacion {
             boolean tieneRecursion = contieneNoTerminal(produccion, noTerminal);
 
             if (tieneOperador && !tieneParentesis && operadoresFaltantes > 0) {
-                String operadorObjetivo = obtenerOperadorEnPosicion(operadoresActual);
-                if (operadorObjetivo != null && produccionTexto.contains(operadorObjetivo)) {
+                // Para derivación izquierda con asociatividad izquierda,
+                // el operador que corresponde es el de la posición actual de expansión
+                int indiceOperador = operadoresFaltantes - 1;
+                String operadorObjetivo = obtenerOperadorEnPosicion(indiceOperador);
+                if (operadorObjetivo != null &&
+                    produccionTexto.contains(operadorObjetivo) &&
+                    esOperadorDelNivel(noTerminal, operadorObjetivo)) {
                     return produccionTexto;
                 }
             }
@@ -118,7 +124,8 @@ public class ServicioDerivacion {
         }
 
         for (String[] produccion : producciones) {
-            if (!contieneNoTerminal(produccion, noTerminal)) {
+            if (!contieneNoTerminal(produccion, noTerminal) &&
+                !contieneParentesis(String.join(" ", produccion))) {
                 return String.join(" ", produccion);
             }
         }
@@ -131,7 +138,8 @@ public class ServicioDerivacion {
         String noTerminal = regla.getNoTerminalIzquierdo();
 
         int operadoresActual = contarOperadores(actual);
-        int operadoresFaltantes = contarOperadores(String.join(" ", simbolosObjetivo)) - operadoresActual;
+        int totalOperadores = contarOperadores(String.join(" ", simbolosObjetivo));
+        int operadoresFaltantes = totalOperadores - operadoresActual;
         boolean objetivoTieneParentesis = contieneParentesis(String.join(" ", simbolosObjetivo));
 
         for (String[] produccion : producciones) {
@@ -141,8 +149,11 @@ public class ServicioDerivacion {
             boolean tieneRecursion = contieneNoTerminal(produccion, noTerminal);
 
             if (tieneOperador && !tieneParentesis && operadoresFaltantes > 0) {
-                String operadorObjetivo = obtenerOperadorEnPosicion(operadoresActual);
-                if (operadorObjetivo != null && produccionTexto.contains(operadorObjetivo)) {
+                int indiceOperador = operadoresFaltantes - 1;
+                String operadorObjetivo = obtenerOperadorEnPosicion(indiceOperador);
+                if (operadorObjetivo != null &&
+                    produccionTexto.contains(operadorObjetivo) &&
+                    esOperadorDelNivel(noTerminal, operadorObjetivo)) {
                     return produccionTexto;
                 }
             }
@@ -166,7 +177,8 @@ public class ServicioDerivacion {
         }
 
         for (String[] produccion : producciones) {
-            if (!contieneNoTerminal(produccion, noTerminal)) {
+            if (!contieneNoTerminal(produccion, noTerminal) &&
+                !contieneParentesis(String.join(" ", produccion))) {
                 return String.join(" ", produccion);
             }
         }
@@ -175,17 +187,29 @@ public class ServicioDerivacion {
     }
 
     private String obtenerOperadorEnPosicion(int posicion) {
-        int count = 0;
+        List<String> operadores = new ArrayList<>();
         int profundidad = 0;
         for (String s : simbolosObjetivo) {
             if (s.equals("(")) { profundidad++; continue; }
             if (s.equals(")")) { profundidad--; continue; }
             if (profundidad == 0 && esOperador(s)) {
-                if (count == posicion) return s;
-                count++;
+                operadores.add(s);
             }
         }
+        if (posicion >= 0 && posicion < operadores.size()) {
+            return operadores.get(posicion);
+        }
         return null;
+    }
+
+    private boolean esOperadorDelNivel(String noTerminal, String operador) {
+        if (noTerminal.equals("E")) {
+            return operador.equals("+") || operador.equals("-");
+        }
+        if (noTerminal.equals("T")) {
+            return operador.equals("*") || operador.equals("/");
+        }
+        return false;
     }
 
     private boolean contieneOperador(String[] produccion) {
