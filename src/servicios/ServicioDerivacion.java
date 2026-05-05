@@ -78,11 +78,9 @@ public class ServicioDerivacion {
         List<String[]> producciones = regla.getProducciones();
         String noTerminal = regla.getNoTerminalIzquierdo();
 
-        int operadoresObjetivo = contarOperadores(String.join(" ", simbolosObjetivo));
         int operadoresActual = contarOperadores(actual);
-        int operadoresFaltantes = operadoresObjetivo - operadoresActual;
+        int operadoresFaltantes = contarOperadores(String.join(" ", simbolosObjetivo)) - operadoresActual;
 
-        // Verificar si el siguiente símbolo en el objetivo es un paréntesis abierto
         boolean siguienteEsParentesis = posicionActual < simbolosObjetivo.length &&
                                         simbolosObjetivo[posicionActual].equals("(");
 
@@ -92,23 +90,21 @@ public class ServicioDerivacion {
             boolean tieneParentesis = contieneParentesis(produccionTexto);
             boolean tieneRecursion = contieneNoTerminal(produccion, noTerminal);
 
-            // Producción con operador al nivel principal
             if (tieneOperador && !tieneParentesis && operadoresFaltantes > 0) {
-                return produccionTexto;
+                String operadorObjetivo = obtenerOperadorEnPosicion(operadoresActual);
+                if (operadorObjetivo != null && produccionTexto.contains(operadorObjetivo)) {
+                    return produccionTexto;
+                }
             }
 
-            // Producción con paréntesis: usar solo si el siguiente símbolo es "("
             if (tieneParentesis && siguienteEsParentesis) {
                 return produccionTexto;
             }
 
-            // Producción terminal simple
             if (!tieneOperador && !tieneParentesis && !tieneRecursion && operadoresFaltantes <= 0) {
                 if (posicionActual < simbolosObjetivo.length) {
                     while (posicionActual < simbolosObjetivo.length &&
-                           (esOperador(simbolosObjetivo[posicionActual]) ||
-                            simbolosObjetivo[posicionActual].equals("(") ||
-                            simbolosObjetivo[posicionActual].equals(")"))) {
+                           esOperador(simbolosObjetivo[posicionActual])) {
                         posicionActual++;
                     }
                     if (posicionActual < simbolosObjetivo.length) {
@@ -134,9 +130,8 @@ public class ServicioDerivacion {
         List<String[]> producciones = regla.getProducciones();
         String noTerminal = regla.getNoTerminalIzquierdo();
 
-        int operadoresObjetivo = contarOperadores(String.join(" ", simbolosObjetivo));
         int operadoresActual = contarOperadores(actual);
-        int operadoresFaltantes = operadoresObjetivo - operadoresActual;
+        int operadoresFaltantes = contarOperadores(String.join(" ", simbolosObjetivo)) - operadoresActual;
         boolean objetivoTieneParentesis = contieneParentesis(String.join(" ", simbolosObjetivo));
 
         for (String[] produccion : producciones) {
@@ -146,7 +141,10 @@ public class ServicioDerivacion {
             boolean tieneRecursion = contieneNoTerminal(produccion, noTerminal);
 
             if (tieneOperador && !tieneParentesis && operadoresFaltantes > 0) {
-                return produccionTexto;
+                String operadorObjetivo = obtenerOperadorEnPosicion(operadoresActual);
+                if (operadorObjetivo != null && produccionTexto.contains(operadorObjetivo)) {
+                    return produccionTexto;
+                }
             }
 
             if (tieneParentesis && objetivoTieneParentesis && operadoresFaltantes >= 0) {
@@ -174,6 +172,20 @@ public class ServicioDerivacion {
         }
 
         return String.join(" ", producciones.get(producciones.size() - 1));
+    }
+
+    private String obtenerOperadorEnPosicion(int posicion) {
+        int count = 0;
+        int profundidad = 0;
+        for (String s : simbolosObjetivo) {
+            if (s.equals("(")) { profundidad++; continue; }
+            if (s.equals(")")) { profundidad--; continue; }
+            if (profundidad == 0 && esOperador(s)) {
+                if (count == posicion) return s;
+                count++;
+            }
+        }
+        return null;
     }
 
     private boolean contieneOperador(String[] produccion) {
