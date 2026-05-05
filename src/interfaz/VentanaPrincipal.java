@@ -60,6 +60,9 @@ public class VentanaPrincipal extends JFrame {
 
         // Expresión
         JLabel lblExpresion = new JLabel("Expresión objetivo:");
+        JLabel lblEspacio = new JLabel("(Deje un espacio por cada elemento)");
+
+
         campoExpresion = new JTextField();
         campoExpresion.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
 
@@ -85,6 +88,8 @@ public class VentanaPrincipal extends JFrame {
         panel.add(btnCargarGramatica);
         panel.add(Box.createVerticalStrut(10));
         panel.add(lblExpresion);
+        panel.add(Box.createVerticalStrut(4));
+        panel.add(lblEspacio);
         panel.add(Box.createVerticalStrut(4));
         panel.add(campoExpresion);
         panel.add(Box.createVerticalStrut(10));
@@ -140,11 +145,12 @@ public class VentanaPrincipal extends JFrame {
         gramatica.cargarDesdeTexto(texto);
         JOptionPane.showMessageDialog(this, "Gramática cargada correctamente.");
     }
-
+ 
     private void generarDerivacion() {
         String expresion = campoExpresion.getText().trim().replaceAll("\\s+", " ");
                 if (expresion.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Ingrese una expresión objetivo.");
+
             return;
         }
 
