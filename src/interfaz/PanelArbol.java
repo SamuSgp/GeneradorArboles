@@ -55,7 +55,7 @@ public class PanelArbol extends JPanel {
         }
     }
 
-    // ---- Dibujo del árbol de derivación ----
+    // Dibujo del árbol de derivación 
 
     private void dibujarArbol(Graphics2D g, NodoArbol nodo, int x, int y, int anchoDisponible) {
         dibujarNodoArbol(g, nodo.getSimbolo(), x, y);
@@ -91,7 +91,7 @@ public class PanelArbol extends JPanel {
         g.drawString(texto, tx, ty);
     }
 
-    // ---- Dibujo del AST ----
+    // Dibujo del AST
 
     private void dibujarAST(Graphics2D g, NodoAST nodo, int x, int y, int anchoDisponible) {
         String etiqueta = nodo.getValor().isEmpty() ? nodo.getTipo() : nodo.getValor();
@@ -139,7 +139,7 @@ public class PanelArbol extends JPanel {
         }
     }
 
-    // ---- Cálculo de anchos para centrar nodos ----
+    // Cálculo de anchos para centrar nodos 
 
     private int calcularAnchoArbol(NodoArbol nodo) {
         if (nodo.getHijos().isEmpty()) return 1;

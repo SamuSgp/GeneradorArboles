@@ -12,17 +12,17 @@ public class ServicioAST {
     private NodoAST convertir(NodoArbol nodo) {
         if (nodo == null) return null;
 
-        // Si es hoja (terminal)
+        
         if (nodo.esHoja()) {
             return crearNodoTerminal(nodo.getSimbolo());
         }
 
-        // Si tiene un solo hijo, no agrega información nueva, se salta
+        
         if (nodo.getHijos().size() == 1) {
             return convertir(nodo.getHijos().get(0));
         }
 
-        // Si tiene tres hijos y el del medio es un operador: E -> E + T
+        
         if (nodo.getHijos().size() == 3) {
             NodoArbol hijoIzq = nodo.getHijos().get(0);
             NodoArbol hijoMedio = nodo.getHijos().get(1);
@@ -35,13 +35,13 @@ public class ServicioAST {
                 return operacion;
             }
 
-            // Caso: F -> ( E ) — se salta los paréntesis y devuelve solo el centro
+            
             if (hijoIzq.getSimbolo().equals("(") && hijoDer.getSimbolo().equals(")")) {
                 return convertir(hijoMedio);
             }
         }
 
-        // Caso general: nodo con varios hijos que no es operador ni paréntesis
+        
         NodoAST nodoAST = new NodoAST(nodo.getSimbolo(), "");
         for (NodoArbol hijo : nodo.getHijos()) {
             NodoAST hijoAST = convertir(hijo);
@@ -59,7 +59,7 @@ public class ServicioAST {
         if (esNumero(simbolo)) {
             return new NodoAST("Numero", simbolo);
         }
-        // Variable o identificador
+        
         return new NodoAST("Identificador", simbolo);
     }
 

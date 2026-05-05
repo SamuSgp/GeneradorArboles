@@ -51,14 +51,13 @@ public class ServicioArbolDerivacion {
                 finSiguiente--;
             }
 
-            // El símbolo reemplazado debe ser un no-terminal.
-            // Si posInicio apunta a un terminal, retroceder hasta el no-terminal más cercano
+            
             int posNoTerminal = posInicio;
             while (posNoTerminal > 0 && gramatica.buscarRegla(anterior[posNoTerminal]) == null) {
                 posNoTerminal--;
             }
 
-            // Recalcular finSiguiente según la posición real del no-terminal
+            
             int desplazamiento = posInicio - posNoTerminal;
             int finSiguienteAjustado = finSiguiente + desplazamiento;
             if (finSiguienteAjustado >= siguiente.length) {

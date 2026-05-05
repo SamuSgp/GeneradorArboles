@@ -12,7 +12,7 @@ public class Gramatica {
         this.reglas = new ArrayList<>();
     }
 
-    // Recibe texto como: "E -> E + T | T"
+    
     public void cargarDesdeTexto(String texto) {
         reglas.clear();
         String[] lineas = texto.trim().split("\n");
@@ -21,7 +21,7 @@ public class Gramatica {
             String linea = lineas[i].trim();
             if (linea.isEmpty()) continue;
 
-            // Separar lado izquierdo y lado derecho por "->"
+            // Separa lado izquierdo y lado derecho por "->"
             String[] partes = linea.split("->");
             if (partes.length != 2) continue;
 
@@ -30,7 +30,7 @@ public class Gramatica {
 
             ReglaProduccion regla = new ReglaProduccion(noTerminal);
 
-            // Separar alternativas por "|"
+            // Separa alternativas por "|"
             String[] alternativas = ladoDerecho.split("\\|");
             for (String alternativa : alternativas) {
                 regla.agregarProduccion(alternativa.trim());
